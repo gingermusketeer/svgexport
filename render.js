@@ -11,12 +11,17 @@ var resize = require('./resize');
 
 module.exports.renderSvg = renderSvg;
 
+let browser = null
+module.exports.cleanup = async function () {
+  await browser.close();
+}
+
 async function renderSvg(commands, done, stdout) {
 
   // Make sure the commands var is an array.
   commands = Array.isArray(commands) ? commands : [ commands ];
 
-  var browser = await puppeteer.launch();
+  browser = browser || await puppeteer.launch({ args: ['--no-sandbox'] });
 
   // Run each command in parallel.
   await async.each(commands, async function(cmd) {
@@ -32,7 +37,7 @@ async function renderSvg(commands, done, stdout) {
     var params = [].concat(cmd.input.slice(1), cmd.output.slice(1));
 
     await page.goto('file://' + encodeURI(svgfile))
-      .catch(function(e) { 
+      .catch(function(e) {
         throw 'Unable to load file (' + e + '): ' + svgfile;
       }
     );
@@ -130,7 +135,7 @@ async function renderSvg(commands, done, stdout) {
         <head>
           <title>svg</title>
         </head>
-        <body 
+        <body
           style="
             margin: 0 !important;
             border: 0 !important;
@@ -170,9 +175,9 @@ async function renderSvg(commands, done, stdout) {
     await outputEl.screenshot(renderSettings);
 
     stdout(svgfile + ' ' + imgfile + ' ' + output.toString() + '\n');
+    page.close();
+  }, function(err) {
 
-  }, async function(err) {
-    await browser.close();
     done(err ? String(err) + '\n': undefined);
   });
 }

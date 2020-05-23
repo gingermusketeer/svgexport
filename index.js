@@ -11,6 +11,7 @@ var renderImpl = require('./render');
 
 module.exports.render = render;
 module.exports.cli = cli;
+module.exports.cleanup = renderImpl.cleanup;
 
 function cli(args) {
 
